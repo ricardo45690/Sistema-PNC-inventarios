@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>SISTEMA PNC - </title>
+    <title>SISTEMA PNC - INVENTARIOS</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -14,7 +14,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 
     <style>
-       
         :root {
             --bg-deep: #020204;
             --bg-panel: rgba(20, 20, 25, 0.7);
@@ -146,17 +145,7 @@
         .dock-btn.active { color: var(--neon-cyan); transform: translateY(-10px) scale(1.1); text-shadow: 0 0 10px var(--neon-cyan); }
         .dock-btn span { display: block; font-size: 0.6rem; font-weight: 600; margin-top: 2px; }
         
-        /* Contenedor del video */
-        #reader { 
-            border: 3px solid var(--neon-cyan); 
-            border-radius: 15px; 
-            margin-bottom: 20px; 
-            display: none; 
-            box-shadow: 0 0 30px var(--neon-cyan); 
-            width: 100%; 
-            overflow: hidden; 
-            background: #000;
-        }
+        #reader { border: 3px solid var(--neon-cyan); border-radius: 15px; margin-bottom: 20px; display: none; box-shadow: 0 0 30px var(--neon-cyan); width: 100%; overflow: hidden; background: #000; }
         
         #cameraError {
             display: none;
@@ -256,7 +245,7 @@
             </div>
             
             <div class="mb-4">
-                <span class="filter-label">INGRESA RECURSO (Ej: 435400)</span>
+                <span class="filter-label">INGRESA RECURSO O DUN (Ej: 435400)</span>
                 <div class="input-group">
                     <input type="text" id="searchRecurso" class="form-control input-dark" placeholder="Buscar..." style="border-color: var(--neon-purple); color: var(--neon-purple) !important; font-weight:bold; font-size:1.2rem;">
                     <button class="btn" onclick="analyzeSpecificRecurso()" style="background: var(--neon-purple); color:#fff; border-radius: 0 10px 10px 0; box-shadow: 0 0 15px var(--neon-purple);">
@@ -303,8 +292,9 @@
 
             <div id="cameraError">
                 <b>CÁMARA BLOQUEADA</b><br>
-                Tu celular no permite abrir la cámara en vivo desde un archivo local. Para que funcione, debes alojar este archivo en internet (usando HTTPS).
+                Tu celular no permite abrir la cámara en vivo desde un archivo local. Sube este sistema a GitHub Pages (HTTPS) para desbloquearla.
             </div>
+            
             <div id="reader"></div>
 
             <div class="mb-3">
@@ -409,7 +399,7 @@
 </div>
 
 <script>
-    // CONFIGURACIÓN
+    // CONFIGURACIÓN DE RUTAS Y SEGURIDAD
     const ADMIN_PASSWORD = "DICKAINVENTARIOS2026"; 
     const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfXZgFscVb4qdifKPy3EbsnE-p1KVuDBEhVUzV1REwDjRb2wg/formResponse"; 
     const CATALOGO_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTYiAYIHlz1jxeBuhbdRMd--cJgIWuuJL-KJ3I7e51qDRgiadXzP-vMhnIopzMdpviYdLdK3ut0o-fv/pub?output=csv"; 
@@ -420,7 +410,7 @@
         dano: "entry.1988074401", cant: "entry.95383917", turno: "entry.1233288513", resp: "entry.173893940"
     };
 
-    // IMPUTABILIDADES CON RIDICKA Y RIHERDEZ
+    // MAPA DE IMPUTABILIDADES (AHORA INCLUYE RIDICKA Y RIHERDEZ)
     const damageMap = {
         "RCDICKA": ["Corrugado Dañado", "Sustracción", "Dañado en Surtido", "Vicio Oculto", "Daño Transporte", "Incidente Carga"],
         "RCHERDEZ": ["Corrugado Dañado", "Dañado en Surtido", "Daño en Embarque", "Vicio Oculto", "Daño Transporte", "Incidente Carga"],
@@ -436,11 +426,13 @@
     let html5QrCode = null;
     let filteredData = []; 
 
+    // CONFIGURACIÓN GLOBAL DE GRÁFICAS
     Chart.register(ChartDataLabels);
     Chart.defaults.color = '#a0a0b0';
     Chart.defaults.font.family = "'Roboto', sans-serif";
     Chart.defaults.borderColor = 'rgba(255,255,255,0.1)';
 
+    // INICIO DE LA APLICACIÓN
     window.onload = () => {
         cleanOldStorage(); 
         const count = Object.keys(CATALOGO_PRODUCTOS).length;
@@ -455,6 +447,7 @@
         migrateOldData();
     };
     
+    // MIGRACIÓN DE DATOS (PARA REGISTROS VIEJOS SIN RECURSO)
     function migrateOldData() {
         let changed = false;
         localDB.forEach(r => {
@@ -472,7 +465,7 @@
     }
 
     // =========================================================================
-    // LÓGICA DE PASTAS (VALIDACIÓN)
+    // LÓGICA RESTRINGIDA DE PASTAS (EL NÚCLEO DEL REQUERIMIENTO NUEVO)
     // =========================================================================
     function esPastaRestringida(descripcion) {
         if (!descripcion) return false;
@@ -488,6 +481,7 @@
             const isPasta = esPastaRestringida(descProducto);
             const isRI = qr.startsWith("RI"); 
 
+            // REGLA 1: Si es Pasta y tratan de poner RC o DT -> BLOQUEO
             if (isPasta && !isRI && (qr.startsWith("RC") || qr.startsWith("DT"))) {
                 alert("⚠️ ALTO: Este producto (Pastas) DEBE ir en RIDICKA o RIHERDEZ.");
                 document.getElementById('inputQR').value = ""; 
@@ -496,6 +490,7 @@
                 return; 
             }
 
+            // REGLA 2: Si NO es pasta y tratan de poner RI -> BLOQUEO
             if (!isPasta && isRI) {
                 alert("⚠️ ALTO: La imputabilidad RI es EXCLUSIVA para pastas.");
                 document.getElementById('inputQR').value = ""; 
@@ -504,6 +499,7 @@
                 return;
             }
 
+            // Si pasa las reglas, cargar el combo de incidencias
             const sel = document.getElementById('inputIncidencia');
             sel.innerHTML = "";
             const key = Object.keys(damageMap).find(k => qr.includes(k));
@@ -544,18 +540,21 @@
                 });
             },
             (errorFrame) => {
-                // Ignorar lecturas fallidas por frame
+                // Se ignoran los frames donde no encuentra código
             }
         ).catch(err => {
             console.error("Error nativo de cámara:", err);
             document.getElementById('reader').style.display = 'none';
-            document.getElementById('cameraError').style.display = 'block';
+            document.getElementById('cameraError').style.display = 'block'; // Muestra la advertencia de HTTPS
         });
     }
 
+    // =========================================================================
+    // LÓGICA DE BÚSQUEDA Y ANÁLISIS DE RECURSO
+    // =========================================================================
     function analyzeSpecificRecurso() {
         const query = document.getElementById('searchRecurso').value.trim().toUpperCase();
-        if(!query) return alert("ESCRIBE UN NÚMERO DE RECURSO");
+        if(!query) return alert("ESCRIBE UN NÚMERO DE RECURSO O DUN");
 
         const db = localDB.filter(r => {
             const resId = r.resourceId || '';
@@ -593,6 +592,9 @@
         renderChart('chartVersusRecurso', 'doughnut', Object.keys(inputCounts), Object.values(inputCounts), chartColors, false);
     }
 
+    // =========================================================================
+    // SINCRONIZACIÓN DE CATÁLOGO GOOGLE SHEETS
+    // =========================================================================
     function cleanOldStorage() {
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
@@ -629,6 +631,9 @@
         finally { document.getElementById('loadingSpinner').style.display = 'none'; }
     }
 
+    // =========================================================================
+    // CÁLCULOS, PINTADO Y LÓGICA GENERAL
+    // =========================================================================
     function checkProduct() {
         const raw = document.getElementById('inputDUN').value.trim();
         const p = CATALOGO_PRODUCTOS[raw.padStart(15,'0')];
@@ -720,6 +725,7 @@
         
         if(!qr || !dun) return alert("❌ FALTAN DATOS.");
 
+        // Doble validación al guardar
         const isPasta = esPastaRestringida(desc);
         const isRI = qr.startsWith("RI");
         if (isPasta && !isRI) return alert("⚠️ ALTO: Las pastas DEBEN ir en RIDICKA o RIHERDEZ.");
